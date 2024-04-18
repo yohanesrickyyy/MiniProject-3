@@ -1,26 +1,38 @@
+-- Create Users table
 CREATE TABLE Users (
-    EmailUsername VARCHAR(255) PRIMARY KEY,
-    Password VARCHAR(255),
-    DepositAmount DECIMAL(10, 2) DEFAULT 0
+    UserID SERIAL PRIMARY KEY,
+    EmailUsername VARCHAR(255) UNIQUE NOT NULL,
+    Password VARCHAR(255) NOT NULL,
+    DepositAmount DECIMAL DEFAULT 0
 );
 
-CREATE TABLE Equipment (
-    ID INT PRIMARY KEY AUTO_INCREMENT,
-    Name VARCHAR(255),
-    Availability BOOLEAN,
-    RentalCosts DECIMAL(10, 2),
-    Category VARCHAR(50)
+-- Create EquipmentTypes table
+CREATE TABLE EquipmentTypes (
+    TypeID SERIAL PRIMARY KEY,
+    Name VARCHAR(255) NOT NULL,
+    Availability BOOLEAN NOT NULL,
+    RentalCosts DECIMAL NOT NULL,
+    Category VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE EquipmentRentalHistory (
-    RentalID INT PRIMARY KEY AUTO_INCREMENT,
-    UserID VARCHAR(255 ),
-    EquipmentID INT,
-    RentalDate DATE,
+-- Create RentalHistory table
+CREATE TABLE RentalHistory (
+    RentalID SERIAL PRIMARY KEY,
+    UserID INT REFERENCES Users(UserID),
+    EquipmentID INT REFERENCES EquipmentTypes(TypeID),
+    RentalDate DATE NOT NULL,
     ReturnDate DATE,
-    RentalCost DECIMAL(10, 2),
-    Status VARCHAR(50),
-    FOREIGN KEY (UserID) REFERENCES Users(EmailUsername),
-    FOREIGN KEY (EquipmentID) REFERENCES Equipment(ID)
+    CONSTRAINT fk_user_rental FOREIGN KEY (UserID) REFERENCES Users(UserID),
+    CONSTRAINT fk_equipment_rental FOREIGN KEY (EquipmentID) REFERENCES EquipmentTypes(TypeID)
 );
 
+-- Create EquipmentRentals table
+CREATE TABLE Orders (
+    RentalID SERIAL PRIMARY KEY,
+    UserID INT REFERENCES Users(UserID),
+    EquipmentID INT REFERENCES EquipmentTypes(TypeID),
+    RentalDate DATE NOT NULL,
+    ReturnDate DATE,
+    CONSTRAINT fk_user_rental_current FOREIGN KEY (UserID) REFERENCES Users(UserID),
+    CONSTRAINT fk_equipment_rental_current FOREIGN KEY (EquipmentID) REFERENCES EquipmentTypes(TypeID)
+);

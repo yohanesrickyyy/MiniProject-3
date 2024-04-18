@@ -1,33 +1,27 @@
-package middleware
+package middlewares
 
 import (
-	"net/http"
+	"miniproject-3/helper"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 )
 
-func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		tokenString := c.Request().Header.Get("authorization")
-
-		if tokenString == "" {
-			return echo.NewHTTPError(http.StatusUnauthorized, "token not found")
-		}
-
-		parsedToken, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, echo.NewHTTPError(http.StatusUnauthorized, "invalid argo use")
+func AuthMiddleware() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			tokenCookie, err := c.Cookie("token")
+			if err != nil {
+				errResponse := helper.ErrUnauthorized(err.Error())
+				return c.JSON(errResponse.Code, errResponse)
 			}
-			return []byte("secretkey"), nil
-		})
+			tokenString := tokenCookie.Value
+			token, err := helper.GetToken(tokenString)
 
-		if parsedToken == nil || !parsedToken.Valid {
-			return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
+			if err != nil || !token.Valid {
+				errResponse := helper.ErrUnauthorized(err.Error())
+				return c.JSON(errResponse.Code, errResponse)
+			}
+			return next(c)
 		}
-
-		c.Set("user_id", parsedToken.Claims.(jwt.MapClaims)["user_id"])
-
-		return next(c)
 	}
 }
